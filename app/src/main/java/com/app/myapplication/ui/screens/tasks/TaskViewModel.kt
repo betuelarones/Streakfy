@@ -6,13 +6,27 @@ import com.app.myapplication.data.local.entities.Priority
 import com.app.myapplication.data.local.entities.Task
 import com.app.myapplication.data.local.entities.TaskTag
 import com.app.myapplication.data.repository.TaskRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class TaskViewModel(private val repo: TaskRepository) : ViewModel() {
-    val tasks = repo.getTasks()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _selectedTag = MutableStateFlow<TaskTag?>(null)
+    val selectedTag = _selectedTag
+    val tasks = combine(
+        repo.getTasks(),
+        selectedTag
+    ) { tasks, tag ->
+        if (tag == null) tasks
+        else tasks.filter { it.tag == tag }
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        emptyList()
+    )
 
     fun addTask(title: String) {
         viewModelScope.launch {
@@ -32,9 +46,14 @@ class TaskViewModel(private val repo: TaskRepository) : ViewModel() {
         }
     }
 
+
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             repo.delete(task)
         }
+    }
+
+    fun setFilter(tag: TaskTag?) {
+        _selectedTag.value = tag
     }
 }
