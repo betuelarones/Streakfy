@@ -1,17 +1,14 @@
 package com.app.myapplication.ui.screens.tasks
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -27,6 +24,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.myapplication.data.local.database.DatabaseProvider
 import com.app.myapplication.data.repository.TaskRepository
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import com.app.myapplication.ui.components.TaskItem
 
 @Composable
 fun TasksScreen() {
@@ -43,22 +43,28 @@ fun TasksScreen() {
     var text by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Row {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             TextField(
                 value = text,
-                onValueChange = { text = it},
+                onValueChange = { text = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Nueva tarea") }
+                placeholder = { Text("Nueva tarea...") },
+                shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            Button(onClick = {
-                if (text.isNotBlank()){
-                    viewModel.addTask(text)
+            Button(
+                onClick = {
+                    if (text.isNotBlank()) {
+                        viewModel.addTask(text)
                         text = ""
                     }
-            }) {
+                },
+                shape = RoundedCornerShape(12.dp)
+            ) {
                 Text("+")
             }
         }
@@ -67,31 +73,13 @@ fun TasksScreen() {
 
         LazyColumn {
             items(tasks) { task ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(task.title)
-
-                    Row {
-                        Checkbox(
-                            checked = task.completed,
-                            onCheckedChange = {
-                                viewModel.toggleTask(task)
-                            }
-                        )
-
-                        Button(onClick = {
-                            viewModel.delete(task)
-                        }) {
-                            Text("X")
-                        }
-                    }
-                }
+                TaskItem(
+                    task = task,
+                    onToggle = { viewModel.toggleTask(task) },
+                    onDelete = { viewModel.deleteTask(task) }
+                )
             }
         }
     }
-
 }
+

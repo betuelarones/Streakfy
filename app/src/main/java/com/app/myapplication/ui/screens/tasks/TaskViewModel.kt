@@ -32,7 +32,7 @@ class TaskViewModel(private val repo: TaskRepository) : ViewModel() {
         }
     }
 
-    fun delete(task: Task) {
+    fun deleteTask(task: Task) {
         viewModelScope.launch {
             repo.delete(task)
         }
