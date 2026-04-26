@@ -20,4 +20,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "StreakFy"
-include(":app")
+include(":streakfy")
