@@ -32,7 +32,7 @@ fun AppNavigation() {
         composable(Screen.Tasks.route) { TasksScreen() }
 
         composable(Screen.Dascboard.route) {
-            DashboardScreen( tasks = tasks,
+            DashboardScreen(
                 onGoToTasks = {
                     navController.navigate(Screen.Tasks.route)
                 }
