@@ -15,7 +15,7 @@ import com.streakfy.app.data.local.entities.Task
         StreakRecord::class,
         FocusSession::class
     ],
-    version = 1
+    version = 2
 )
 abstract class AppDatabase : RoomDatabase() {
 
