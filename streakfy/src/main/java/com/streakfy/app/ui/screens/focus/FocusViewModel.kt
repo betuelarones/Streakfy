@@ -5,7 +5,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.streakfy.app.data.local.entities.FocusSession
 import com.streakfy.app.data.repository.FocusSessionRepository
+import kotlinx.coroutines.launch
 
 class FocusViewModel(private val repo: FocusSessionRepository) : ViewModel(){
 
@@ -25,6 +28,17 @@ class FocusViewModel(private val repo: FocusSessionRepository) : ViewModel(){
 
             override fun onFinish() {
                 isRunning = false
+
+                viewModelScope.launch {
+                    repo.insert(
+                        FocusSession(
+                            duration = (1500 - timeLeft) / 60,
+                            startTime = System.currentTimeMillis() - (25 * 60 * 1000),
+                            ednTime = System.currentTimeMillis(),
+                            completed = true
+                        )
+                    )
+                }
             }
         }.start()
     }
