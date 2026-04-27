@@ -1,10 +1,6 @@
 package com.streakfy.app.ui.screens.dashboard
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -20,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.streakfy.app.data.local.database.DatabaseProvider
-import com.streakfy.app.data.local.entities.Task
+import com.streakfy.app.data.repository.FocusSessionRepository
 import com.streakfy.app.data.repository.StreakRepository
 import com.streakfy.app.data.repository.TaskRepository
 import java.text.SimpleDateFormat
@@ -38,9 +34,10 @@ fun DashboardScreen(
     val db = remember { DatabaseProvider.getDatabase(context) }
     val taskRepo = remember { TaskRepository(db.taskDao()) }
     val streakRepo = remember { StreakRepository(db.streakDao()) }
+    val focusRepo = remember { FocusSessionRepository(db.focusSessionDao()) }
 
     val viewModel: DashboardViewModel = viewModel(
-        factory = DashboardViewModelFactory(taskRepo, streakRepo)
+        factory = DashboardViewModelFactory(taskRepo, streakRepo, focusRepo)
     )
 
     val tasks by viewModel.tasks.collectAsState()

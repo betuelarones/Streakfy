@@ -11,4 +11,7 @@ class FocusSessionRepository(private val dao: FocusSessionDao) {
         dao.insert(session)
     }
 
+    suspend fun getSessionsOnce(): List<FocusSession> {
+        return dao.getAllOnce()
+    }
 }

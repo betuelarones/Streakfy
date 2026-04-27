@@ -3,10 +3,10 @@ package com.streakfy.app.ui.screens.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.streakfy.app.data.local.entities.StreakRecord
+import com.streakfy.app.data.repository.FocusSessionRepository
 import com.streakfy.app.data.repository.StreakRepository
 import com.streakfy.app.data.repository.TaskRepository
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -16,7 +16,8 @@ import java.util.Locale
 class DashboardViewModel(
 
     private val taskRepo: TaskRepository,
-    private val streakRepo: StreakRepository
+    private val streakRepo: StreakRepository,
+    private val focusRepo: FocusSessionRepository
 ) : ViewModel() {
 
     val tasks = taskRepo.getTasks()
@@ -27,18 +28,31 @@ class DashboardViewModel(
 
     fun checkToday() {
         viewModelScope.launch {
+
             val todayFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val today = todayFormat.format(Date())
 
             val todayTasks = tasks.value.filter {
-                it.completed && it.completedAt != null &&
+                it.completed &&
+                        it.completedAt != null &&
                         todayFormat.format(Date(it.completedAt)) == today
             }
 
+            val todayFocus = focusRepo.getSessionsOnce().filter {
+                it.completed &&
+                        it.ednTime != null &&
+                        todayFormat.format(Date(it.ednTime)) == today
+            }
+
+            val totalFocusMinutes = todayFocus.sumOf { it.duration }
+
+            val meetsCriteria =
+                todayTasks.isNotEmpty() || totalFocusMinutes >= 25
+
             val record = StreakRecord(
                 date = today,
-                completionPercentage = if (todayTasks.isNotEmpty()) 100 else 0,
-                focusMinutes = 0,
+                completionPercentage = if (meetsCriteria) 100 else 0,
+                focusMinutes = totalFocusMinutes,
                 tasksCompleted = todayTasks.size
             )
 
