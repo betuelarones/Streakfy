@@ -3,7 +3,6 @@ package com.streakfy.app.data.local.entities
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-
 @Entity(tableName = "tasks")
 data class Task(
     @PrimaryKey(autoGenerate = true)
@@ -14,7 +13,8 @@ data class Task(
     val completed: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val completedAt: Long? = null,
-    val order: Int = 0
+    val order: Int = 0,
+    val dueDate: Long? = null
 )
 
 enum class Priority {

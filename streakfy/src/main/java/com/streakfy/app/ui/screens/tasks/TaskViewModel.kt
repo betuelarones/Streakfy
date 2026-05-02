@@ -16,8 +16,9 @@ class TaskViewModel(private val repo: TaskRepository) : ViewModel() {
 
     private val _selectedTag = MutableStateFlow<TaskTag?>(null)
     val selectedTag = _selectedTag
+
     val tasks = combine(
-        repo.getTasks(),
+        repo.getActiveTasks(),
         selectedTag
     ) { tasks, tag ->
         if (tag == null) tasks
@@ -28,24 +29,29 @@ class TaskViewModel(private val repo: TaskRepository) : ViewModel() {
         emptyList()
     )
 
-    fun addTask(title: String) {
+    fun addTask(title: String, priority: Priority = Priority.MEDIUM, tag: TaskTag = TaskTag.PERSONAL) {
         viewModelScope.launch {
             repo.insert(
                 Task(
                     title = title,
-                    priority = Priority.MEDIUM,
-                    tag = TaskTag.PERSONAL
+                    priority = priority,
+                    tag = tag
                 )
             )
         }
     }
 
-    fun toggleTask(task: Task) {
+    fun updateTask(task: Task) {
         viewModelScope.launch {
-            repo.update(task.copy(completed = !task.completed))
+            repo.update(task)
         }
     }
 
+    fun toggleTask(task: Task) {
+        viewModelScope.launch {
+            repo.toggleTask(task)
+        }
+    }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
@@ -57,3 +63,4 @@ class TaskViewModel(private val repo: TaskRepository) : ViewModel() {
         _selectedTag.value = tag
     }
 }
+

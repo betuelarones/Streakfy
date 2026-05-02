@@ -12,6 +12,21 @@ interface StreakDao {
     @Query("SELECT * FROM streak_records ORDER BY date DESC")
     fun getAll(): Flow<List<StreakRecord>>
 
+    @Query("SELECT * FROM streak_records")
+    suspend fun getAllOnce(): List<StreakRecord>
+
+    @Query("SELECT * FROM streak_records WHERE date = :date")
+    suspend fun getByDate(date: String): StreakRecord?
+
+    @Query("SELECT * FROM streak_records ORDER BY date DESC LIMIT 1")
+    suspend fun getLatest(): StreakRecord?
+
+    @Query("SELECT COUNT(*) FROM streak_records WHERE completionPercentage = 100")
+    suspend fun getStreakCount(): Int
+
+    @Query("SELECT * FROM streak_records ORDER BY completionPercentage DESC LIMIT 1")
+    suspend fun getLongestStreak(): StreakRecord?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(record: StreakRecord)
 }

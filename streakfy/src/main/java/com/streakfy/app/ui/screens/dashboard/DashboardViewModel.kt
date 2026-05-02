@@ -6,7 +6,10 @@ import com.streakfy.app.data.local.entities.StreakRecord
 import com.streakfy.app.data.repository.FocusSessionRepository
 import com.streakfy.app.data.repository.StreakRepository
 import com.streakfy.app.data.repository.TaskRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -20,11 +23,38 @@ class DashboardViewModel(
     private val focusRepo: FocusSessionRepository
 ) : ViewModel() {
 
-    val tasks = taskRepo.getTasks()
+    val tasks = taskRepo.getActiveTasks()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val streak = streakRepo.getStreak()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val totalFocusTime: StateFlow<Int> = MutableStateFlow(0)
+    val completedTasksToday: StateFlow<Int> = MutableStateFlow(0)
+
+    init {
+        viewModelScope.launch {
+            combine(taskRepo.getActiveTasks(), focusRepo.getSessionsFlow()) { tasks, sessions ->
+                val todayFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val today = todayFormat.format(Date())
+
+                val todayTasksCompleted = tasks.count {
+                    it.completed && it.completedAt != null &&
+                    todayFormat.format(Date(it.completedAt)) == today
+                }
+
+                val todayFocusMinutes = sessions.filter {
+                    it.completed && it.endTime != null &&
+                    todayFormat.format(Date(it.endTime)) == today
+                }.sumOf { it.duration }
+
+                completedTasksToday as MutableStateFlow
+                (completedTasksToday as MutableStateFlow).value = todayTasksCompleted
+                totalFocusTime as MutableStateFlow
+                (totalFocusTime as MutableStateFlow).value = todayFocusMinutes
+            }.collect { }
+        }
+    }
 
     fun checkToday() {
         viewModelScope.launch {
@@ -32,16 +62,19 @@ class DashboardViewModel(
             val todayFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val today = todayFormat.format(Date())
 
-            val todayTasks = tasks.value.filter {
+            val allTasks = taskRepo.getTasksOnce()
+            val allSessions = focusRepo.getSessionsOnce()
+
+            val todayTasks = allTasks.filter {
                 it.completed &&
                         it.completedAt != null &&
                         todayFormat.format(Date(it.completedAt)) == today
             }
 
-            val todayFocus = focusRepo.getSessionsOnce().filter {
+            val todayFocus = allSessions.filter {
                 it.completed &&
-                        it.ednTime != null &&
-                        todayFormat.format(Date(it.ednTime)) == today
+                        it.endTime != null &&
+                        todayFormat.format(Date(it.endTime)) == today
             }
 
             val totalFocusMinutes = todayFocus.sumOf { it.duration }
@@ -57,6 +90,12 @@ class DashboardViewModel(
             )
 
             streakRepo.save(record)
+        }
+    }
+
+    fun toggleTask(task: com.streakfy.app.data.local.entities.Task) {
+        viewModelScope.launch {
+            taskRepo.toggleTask(task)
         }
     }
 }
